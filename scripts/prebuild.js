@@ -38,43 +38,41 @@ function findLongestStandingRecordPerMap(records) {
 			record.workshop_item_id = "[Official]"; // eslint-disable-line camelcase
 		}
 		// If this map is not already in the maps object, add it
-		if (!maps[record.map_name]) {
-			maps[record.map_name] = {};
+		// if (!maps[record.map_name]) {
+		// 	maps[record.map_name] = {};
+		// }
+		// If this map is not already in the maps object, add it
+		if (!maps[record.workshop_item_id]) {
+			maps[record.workshop_item_id] = {};
 		}
 		// If this map is not already in the maps object, add it
-		if (!maps[record.map_name][record.workshop_item_id]) {
-			maps[record.map_name][record.workshop_item_id] = {};
-		}
-		// If this map is not already in the maps object, add it
-		if (!maps[record.map_name][record.workshop_item_id][record.mode]) {
-			maps[record.map_name][record.workshop_item_id][record.mode] = record;
+		if (!maps[record.workshop_item_id][record.mode]) {
+			maps[record.workshop_item_id][record.mode] = record;
 		}
 		// If this record is more recent than the existing record for this map, update it
-		if (Date.parse(record.fetch_time) > Date.parse(maps[record.map_name][record.workshop_item_id][record.mode].fetch_time)) {
-			const temp = maps[record.map_name][record.workshop_item_id][record.mode];
-			maps[record.map_name][record.workshop_item_id][record.mode] = record;
-			maps[record.map_name][record.workshop_item_id][record.mode].previousRecord = temp;
+		if (Date.parse(record.fetch_time) > Date.parse(maps[record.workshop_item_id][record.mode].fetch_time)) {
+			const temp = maps[record.workshop_item_id][record.mode];
+			maps[record.workshop_item_id][record.mode] = record;
+			maps[record.workshop_item_id][record.mode].previousRecord = temp;
 		}
 	}
 	// Compute the standing duration of each map's world record
 	const mapList = [];
-	for (const idsWithThisMapName of Object.values(maps)) {
-		for (const modesInThisMap of Object.values(idsWithThisMapName)) {
-			for (const record of Object.values(modesInThisMap)) {
-				// If the map author is "[unknown]" try to find the author's name in other records
-				const author = (record.map_author === "[unknown]") ? findAuthor(record, records) : record.map_author;
-				// Compute the standing duration in milliseconds
-				const standingFor = new Date() - Date.parse(record.fetch_time);
-				// Compute the previously stood for duration in milliseconds
-				const stoodFor = (record.previousRecord) ? Date.parse(record.fetch_time) - Date.parse(record.previousRecord.fetch_time) : 0;
-				// Add the map, standing duration, and author to the list
-				mapList.push({
-					...record,
-					standingFor,
-					stoodFor,
-					author
-				});
-			}
+	for (const modesInThisMap of Object.values(maps)) {
+		for (const record of Object.values(modesInThisMap)) {
+			// If the map author is "[unknown]" try to find the author's name in other records
+			const author = (record.map_author === "[unknown]") ? findAuthor(record, records) : record.map_author;
+			// Compute the standing duration in milliseconds
+			const standingFor = new Date() - Date.parse(record.fetch_time);
+			// Compute the previously stood for duration in milliseconds
+			const stoodFor = (record.previousRecord) ? Date.parse(record.fetch_time) - Date.parse(record.previousRecord.fetch_time) : 0;
+			// Add the map, standing duration, and author to the list
+			mapList.push({
+				...record,
+				standingFor,
+				stoodFor,
+				author
+			});
 		}
 	}
 	// Convert the duration to a human-readable string for each map
