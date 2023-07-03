@@ -20,12 +20,20 @@ function findAuthor(record, records) {
 	if (record.map_author !== "[unknown]") {
 		return record.map_author;
 	}
-	// Search for the map author in other records
-	for (const r of records) {
-		if (r.map_name === record.map_name && r.workshop_item_id === record.workshop_item_id && r.map_author !== "[unknown]") {
+
+	// Loop backwards through the records to find the author's most recent name
+	for (let i = records.length - 1; i >= 0; i--) {
+		const r = records[i];
+		// Check author and wr holders for matching author steam id to find author name
+		if (r.map_author !== "[unknown]" && r.steam_id_author === record.steam_id_author) {
 			return r.map_author;
+		} else if (r.new_recordholder !== "[unknown]" && r.steam_id_new_recordholder === record.steam_id_author) {
+			return r.new_recordholder;
+		} else if (r.previous_recordholder && r.previous_recordholder !== "[unknown]" && r.steam_id_previous_recordholder === record.steam_id_author) {
+			return r.previous_recordholder;
 		}
 	}
+
 	// Return "[unknown]" if no other author was found
 	return "[unknown]";
 }
