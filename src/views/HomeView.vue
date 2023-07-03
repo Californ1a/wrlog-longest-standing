@@ -38,9 +38,7 @@ let records;
 try {
 	const res = await fetch(
 		import.meta.env.BASE_URL + 'output.json');
-	console.log('res', res);
 	records = await res.json();
-	console.log('records', records);
 } catch (err) {
 	console.error(err);
 }
