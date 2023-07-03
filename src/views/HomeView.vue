@@ -13,7 +13,7 @@
 				<button :disabled="page === totalPages" @click="page++">Next</button> -->
 				<span>Page <input v-model.lazy="page" type="number" /> of {{ totalPages }}</span>
 				<br />
-				<span>(Showing {{ displayStart }}-{{ displayEnd }} of {{ displayTotal }})</span>
+				<span>Showing {{ displayStart }}-{{ displayEnd }} of {{ displayTotal }}</span>
 			</div>
 			<div class="search">
 				<input type="text" placeholder="Search..." ref="search" @input="processChange" />
@@ -140,7 +140,7 @@ tbody tr.official:hover {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 10px;
+	margin-bottom: 5px;
 	margin-right: 10px;
 }
 
@@ -157,6 +157,14 @@ tbody tr.official:hover {
 
 .search input:focus {
 	outline: none;
+}
+
+.pagination {
+	line-height: 20px;
+}
+
+.pagination span:nth-child(1) {
+	line-height: 35px;
 }
 
 .pagination input {
