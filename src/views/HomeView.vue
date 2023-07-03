@@ -9,9 +9,9 @@
 		</p>
 		<div class="controls">
 			<div class="pagination">
-				<button :disabled="page === 1" @click="page--">Previous</button>
-				<button :disabled="page === totalPages" @click="page++">Next</button>
-				<span>Page {{ page }} of {{ totalPages }}</span>
+				<!-- <button :disabled="page === 1" @click="page--">Previous</button>
+				<button :disabled="page === totalPages" @click="page++">Next</button> -->
+				<span>Page <input v-model.lazy="page" type="number" /> of {{ totalPages }}</span>
 				<br />
 				<span>(Showing {{ displayStart }}-{{ displayEnd }} of {{ displayTotal }})</span>
 			</div>
@@ -148,6 +148,28 @@ tbody tr.official:hover {
 	line-height: 30px;
 	font-size: 16pt;
 	width: 100%;
+	background-color: #111;
+	color: #fff;
+	border: none;
+	border-radius: 5px;
+	padding: 5px;
+}
+
+.search input:focus {
+	outline: none;
+}
+
+.pagination input {
+	width: 40px;
+	background-color: #111;
+	color: #fff;
+	border: none;
+	border-radius: 5px;
+	padding: 5px;
+}
+
+.pagination input:focus {
+	outline: none;
 }
 
 p.note {
