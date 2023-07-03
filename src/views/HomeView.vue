@@ -36,7 +36,8 @@ import RecordLine from '@/components/RecordLine.vue';
 const page = ref(1);
 let records;
 try {
-	const res = await fetch('./output.json');
+	const res = await fetch(
+		import.meta.env.BASE_URL + 'output.json');
 	console.log('res', res);
 	records = await res.json();
 	console.log('records', records);
