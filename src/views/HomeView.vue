@@ -4,18 +4,22 @@
 		<p>
 			These are the longest-standing records for each map and mode. The records are sorted by how long they have been standing, with the longest-standing record at the top.
 		</p>
-		<div>
-			<button :disabled="page === 1" @click="page--">Previous</button>
-			<button :disabled="page === totalPages" @click="page++">Next</button>
-			<span>Page {{ page }} of {{ totalPages }}</span>
-			<br />
-			<span>(Showing {{ displayStart }}-{{ displayEnd }} of {{ displayTotal }})</span>
+		<div class="controls">
+			<div class="pagination">
+				<button :disabled="page === 1" @click="page--">Previous</button>
+				<button :disabled="page === totalPages" @click="page++">Next</button>
+				<span>Page {{ page }} of {{ totalPages }}</span>
+				<br />
+				<span>(Showing {{ displayStart }}-{{ displayEnd }} of {{ displayTotal }})</span>
+			</div>
+			<div class="search">
+				<input type="text" placeholder="Search..." ref="search" @input="processChange" />
+			</div>
 		</div>
 		<table>
 			<thead>
 				<tr>
-					<th></th>
-					<th>Map</th>
+					<th colspan="2">Map</th>
 					<th>Mode</th>
 					<th>Author</th>
 					<th>Time/Score</th>
@@ -33,28 +37,57 @@
 <script setup>
 import { ref, computed } from 'vue';
 import RecordLine from '@/components/RecordLine.vue';
+const search = ref(null);
 const page = ref(1);
-let records;
+const recordsRef = ref([]);
+const maxPerPage = 100;
+
+let records
+
 try {
 	const res = await fetch(
 		import.meta.env.BASE_URL + 'output.json');
 	records = await res.json();
+	recordsRef.value = records;
 } catch (err) {
 	console.error(err);
 }
 
-const perPage = 100;
-const totalPages = Math.ceil(records.length / perPage);
-const totalRecords = records.length;
+function debounce(func, timeout = 300) {
+	let timer;
+	return (...args) => {
+		clearTimeout(timer);
+		timer = setTimeout(() => {
+			func.apply(this, args);
+		}, timeout);
+	};
+}
 
-const displayStart = computed(() => ((page.value - 1) * perPage + 1).toLocaleString());
-const displayEnd = computed(() => Math.min(page.value * perPage, totalRecords).toLocaleString());
-const displayTotal = computed(() => totalRecords.toLocaleString());
+function doSearch() {
+	page.value = 1;
+	recordsRef.value = records.filter(record => {
+		const searchLower = search.value.value.toLowerCase();
+		return record.map_name.toLowerCase().includes(searchLower)
+			|| (record.author && record.author !== '[unknown]' && record.author.toLowerCase().includes(searchLower))
+			|| record.new_recordholder.toLowerCase().includes(searchLower)
+			|| (record.steam_id_author && record.steam_id_author.includes(searchLower))
+			|| record.steam_id_new_recordholder.includes(searchLower);
+	});
+}
+const processChange = debounce(() => doSearch());
+
+const perPage = computed(() => Math.min(maxPerPage, recordsRef.value.length));
+const totalPages = computed(() => Math.ceil(recordsRef.value.length / perPage.value));
+const totalRecords = computed(() => recordsRef.value.length || 0);
+
+const displayStart = computed(() => ((page.value - 1) * perPage.value + 1).toLocaleString());
+const displayEnd = computed(() => Math.min(page.value * perPage.value, totalRecords.value).toLocaleString());
+const displayTotal = computed(() => totalRecords.value.toLocaleString());
 
 const displayRows = computed(() => {
-	const start = (page.value - 1) * perPage;
-	const end = page.value * perPage;
-	return records.slice(start, end);
+	const start = (page.value - 1) * perPage.value;
+	const end = page.value * perPage.value;
+	return recordsRef.value.slice(start, end);
 });
 </script>
 
@@ -98,5 +131,19 @@ tbody tr.official {
 
 tbody tr.official:hover {
 	background-color: rgba(0, 150, 255, 0.25);
+}
+
+.controls {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 10px;
+	margin-right: 10px;
+}
+
+.search input {
+	line-height: 30px;
+	font-size: 16pt;
+	width: 100%;
 }
 </style>
