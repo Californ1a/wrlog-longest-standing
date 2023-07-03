@@ -1,4 +1,5 @@
 <template>
+	<GithubCorner />
 	<Suspense>
 		<RouterView />
 
@@ -10,6 +11,7 @@
 
 <script setup>
 import { RouterView } from 'vue-router'
+import GithubCorner from '@/components/GithubCorner.vue'
 </script>
 
 <style>
