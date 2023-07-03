@@ -79,11 +79,11 @@ function doSearch() {
 }
 const processChange = debounce(() => doSearch());
 
-const perPage = computed(() => Math.min(maxPerPage, recordsRef.value.length));
-const totalPages = computed(() => Math.ceil(recordsRef.value.length / perPage.value));
+const perPage = computed(() => Math.min(maxPerPage, recordsRef.value.length) || 1);
+const totalPages = computed(() => Math.ceil(recordsRef.value.length / perPage.value) || 1);
 const totalRecords = computed(() => recordsRef.value.length || 0);
 
-const displayStart = computed(() => ((page.value - 1) * perPage.value + 1).toLocaleString());
+const displayStart = computed(() => (totalRecords.value === 0) ? 0 : ((page.value - 1) * perPage.value + 1).toLocaleString());
 const displayEnd = computed(() => Math.min(page.value * perPage.value, totalRecords.value).toLocaleString());
 const displayTotal = computed(() => totalRecords.value.toLocaleString());
 
