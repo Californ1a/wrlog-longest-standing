@@ -71,6 +71,7 @@ const standingForDisplay = computed(() => {
 
 function hideImage(event) {
 	event.target.style.display = 'none';
+	event.target.closest('tr').classList.add('no-image');
 }
 </script>
 
@@ -125,5 +126,9 @@ td:last-child span {
 
 sup {
 	font-size: 0.75em;
+}
+
+tr.no-image {
+	filter: blur(0.4px) opacity(0.6);
 }
 </style>
