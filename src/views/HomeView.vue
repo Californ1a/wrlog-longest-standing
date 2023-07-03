@@ -4,6 +4,9 @@
 		<p>
 			These are the longest-standing records for each map and mode. The records are sorted by how long they have been standing, with the longest-standing record at the top.
 		</p>
+		<p class="note">
+			Note that some records are on maps that are no longer on the workshop, thus they can't be beaten anymore. Additionally, some are on maps that still exist on the workshop but are no longer possible to beat due to the author updating the map after the record was obtained.
+		</p>
 		<div class="controls">
 			<div class="pagination">
 				<button :disabled="page === 1" @click="page--">Previous</button>
@@ -145,5 +148,10 @@ tbody tr.official:hover {
 	line-height: 30px;
 	font-size: 16pt;
 	width: 100%;
+}
+
+p.note {
+	font-size: 0.85rem;
+	color: #ccc;
 }
 </style>
