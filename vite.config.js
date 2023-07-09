@@ -26,5 +26,8 @@ export default defineConfig({
 			'duration-js',
 			'humanize-duration',
 		],
+	},
+	define: {
+		__BUILD_TIMESTAMP__: JSON.stringify(new Date().toISOString()),
 	}
 });

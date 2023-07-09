@@ -34,18 +34,54 @@
 				<RecordLine v-for="record in displayRows" :record="record" :key="record.id" />
 			</tbody>
 		</table>
+		<div class="controls bottom">
+			<div class="pagination">
+				<button :disabled="page === 1" @click="page--">Previous</button>
+				<button :disabled="page === totalPages" @click="page++">Next</button>
+				<span>Page {{ page }} of {{ totalPages }}</span>
+			</div>
+		</div>
 	</main>
+	<footer>
+		<div class="github">
+			<a href="https://github.com/Californ1a/wrlog-longest-standing" target="_blank" rel="noopener noreferrer">
+				GitHub
+			</a>
+		</div><b>&nbsp;•&nbsp;</b>
+		<div class="build-date">
+			Last Updated: {{ dateRef }}
+		</div><b>&nbsp;•&nbsp;</b>
+		<div class="discord">
+			<a href="https://discord.gg/distance" target="_blank" rel="noopener noreferrer">
+				Discord
+			</a>
+		</div>
+	</footer>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import RecordLine from '@/components/RecordLine.vue';
+const buildDate = new Date(__BUILD_TIMESTAMP__);
 const search = ref(null);
 const page = ref(1);
+const dtFormat = new Intl.DateTimeFormat('en', {
+	year: 'numeric',
+	month: 'long',
+	day: 'numeric',
+	hour: 'numeric',
+	minute: 'numeric',
+	timeZoneName: 'short',
+});
+const dateRef = ref(dtFormat.format(buildDate));
 const recordsRef = ref([]);
 const maxPerPage = 100;
 
 let records
+
+onMounted(() => {
+
+});
 
 try {
 	const res = await fetch(
@@ -107,6 +143,7 @@ th {
 	background-color: #000000bb;
 	color: #eee;
 	padding: 10px;
+	z-index: 2;
 }
 
 tbody tr td:nth-child(2) {
@@ -183,5 +220,76 @@ tbody tr.official:hover {
 p.note {
 	font-size: 0.85rem;
 	color: #ccc;
+}
+
+main {
+	margin: 15px;
+}
+
+footer {
+	margin-top: 20px;
+	font-size: 0.85rem;
+	color: #ccc;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	background-color: #000000bb;
+	padding: 15px 40%;
+	text-align: center;
+	white-space: nowrap;
+	z-index: 2;
+}
+
+a {
+	text-decoration: none;
+	color: #0af;
+}
+
+a:hover {
+	color: #0cf;
+}
+
+a:visited {
+	color: #9af;
+}
+
+a:active {
+	color: #0aa;
+}
+
+a:visited:hover {
+	color: #bcf;
+}
+
+.controls.bottom {
+	margin-top: 10px;
+}
+
+footer a {
+	color: #eee;
+}
+
+footer a:hover {
+	color: #fff;
+}
+
+footer a:visited {
+	color: #eee;
+}
+
+footer a:active {
+	color: #fff;
+}
+
+footer a:visited:hover {
+	color: #fff;
+}
+
+h1 {
+	margin-top: 0;
+}
+
+.controls.bottom .pagination span {
+	margin-left: 5px;
 }
 </style>
