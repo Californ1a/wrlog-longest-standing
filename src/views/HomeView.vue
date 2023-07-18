@@ -15,8 +15,22 @@
 				<br />
 				<span>Showing {{ displayStart }}-{{ displayEnd }} of {{ displayTotal }}</span>
 			</div>
+			<div class="filters">
+				<label>
+					<input type="checkbox" value="sprint" :checked="modes.includes('sprint')" @input="processMode" />
+					Sprint
+				</label>
+				<label>
+					<input type="checkbox" value="stunt" :checked="modes.includes('stunt')" @input="processMode" />
+					Stunt
+				</label>
+				<label>
+					<input type="checkbox" value="challenge" :checked="modes.includes('challenge')" @input="processMode" />
+					Challenge
+				</label>
+			</div>
 			<div class="search">
-				<input type="text" placeholder="Search..." ref="search" @input="processChange" />
+				<input type="text" placeholder="Search..." ref="search" @input="processSearch" />
 			</div>
 		</div>
 		<table>
@@ -28,6 +42,7 @@
 					<th>Time/Score</th>
 					<th>WR Holder</th>
 					<th>Standing For</th>
+					<th>Changed Hands</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -60,11 +75,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import RecordLine from '@/components/RecordLine.vue';
 const buildDate = new Date(__BUILD_TIMESTAMP__);
 const search = ref(null);
 const page = ref(1);
+const modes = ref(['sprint', 'stunt', 'challenge']);
 const dtFormat = new Intl.DateTimeFormat('en', {
 	year: 'numeric',
 	month: 'long',
@@ -78,10 +94,6 @@ const recordsRef = ref([]);
 const maxPerPage = 100;
 
 let records
-
-onMounted(() => {
-
-});
 
 try {
 	const res = await fetch(
@@ -106,14 +118,25 @@ function doSearch() {
 	page.value = 1;
 	recordsRef.value = records.filter(record => {
 		const searchLower = search.value.value.toLowerCase();
-		return record.map_name.toLowerCase().includes(searchLower)
+		return (record.map_name.toLowerCase().includes(searchLower)
 			|| (record.author && record.author !== '[unknown]' && record.author.toLowerCase().includes(searchLower))
 			|| record.new_recordholder.toLowerCase().includes(searchLower)
 			|| (record.steam_id_author && record.steam_id_author.includes(searchLower))
-			|| record.steam_id_new_recordholder.includes(searchLower);
+			|| record.steam_id_new_recordholder.includes(searchLower)) && modes.value.includes(record.mode.toLowerCase());
 	});
 }
-const processChange = debounce(() => doSearch());
+
+function doMode(event) {
+	if (event.target.checked) {
+		modes.value.push(event.target.value);
+	} else {
+		modes.value = modes.value.filter(mode => mode !== event.target.value);
+	}
+	doSearch();
+}
+
+const processSearch = debounce(() => doSearch());
+const processMode = debounce((e) => doMode(e));
 
 const perPage = computed(() => Math.min(maxPerPage, recordsRef.value.length) || 1);
 const totalPages = computed(() => Math.ceil(recordsRef.value.length / perPage.value) || 1);
@@ -291,5 +314,18 @@ h1 {
 
 .controls.bottom .pagination span {
 	margin-left: 5px;
+}
+
+.filters {
+	margin-left: auto;
+	margin-right: 10px;
+	display: flex;
+	flex-direction: column;
+	user-select: none;
+}
+
+.filters label,
+.filters input {
+	cursor: pointer;
 }
 </style>
