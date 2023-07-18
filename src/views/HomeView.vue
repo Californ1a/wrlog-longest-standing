@@ -42,7 +42,7 @@
 					<th>Time/Score</th>
 					<th>WR Holder</th>
 					<th>Standing For</th>
-					<th>Changed Hands</th>
+					<th class="changed-hands" title="x/y where x denotes how many times a record has changed to a different holder and y is the total number of times the record has been beaten.">Changed Hands</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -327,5 +327,9 @@ h1 {
 .filters label,
 .filters input {
 	cursor: pointer;
+}
+
+.changed-hands {
+	cursor: help;
 }
 </style>
