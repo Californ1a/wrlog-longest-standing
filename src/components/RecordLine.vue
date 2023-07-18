@@ -27,15 +27,24 @@
 				[Official]
 			</span>
 		</td>
-		<td>{{ record.record_new }}</td>
+		<td>
+			<span v-if="record.record_new_str">{{ record.record_new_str }}</span>
+			<span v-else>{{ record.record_new }}</span>
+		</td>
 		<td>
 			<a :href="links.wrHolder">
 				{{ record.new_recordholder }}
 			</a>
 			<sup> (<a :href="links.wrHolderHB">HB</a><b> • </b><a :href="links.wrHolderHG">HG</a>)</sup>
 		</td>
-		<td>
+		<td class="standing-for">
 			<span :title="record.standingForMaxStr">{{ standingForDisplay }}</span>
+		</td>
+		<td class="changed-hands-td">
+			<div class="changed-hands">
+				<span>{{ record.previousCount }}/{{ record.previousCountAll }}</span>
+				<span class="tooltip" v-html="recordHistoryTooltip"></span>
+			</div>
 		</td>
 	</tr>
 </template>
@@ -63,6 +72,36 @@ const isOfficial = computed(() => props.record.workshop_item_id === '[Official]'
 const standingForDisplay = computed(() => {
 	const [num, unit] = props.record.standingForStr.split(' ');
 	return `${parseInt(num).toLocaleString()} ${unit}`;
+});
+
+function compilePreviousRecords(record) {
+	let r = record;
+	const records = [];
+	while (r.previousRecord) {
+		records.push(r);
+		r = r.previousRecord;
+	}
+	records.push(r);
+	return records;
+}
+
+const recordHistoryTooltip = computed(() => {
+	const records = compilePreviousRecords(props.record);
+	// console.log(records);
+	return records.map((record) => {
+		let cleanRecord = record.record_new;
+		if (record.mode !== 'Stunt') {
+			// remove all leading `00:` from the time
+			while (cleanRecord.startsWith('00:')) {
+				cleanRecord = cleanRecord.replace(/^00:/, '');
+			}
+		}
+		// trim leading 0 from minutes
+		if (cleanRecord.startsWith('0')) {
+			cleanRecord = cleanRecord.replace(/^0/, '');
+		}
+		return `${cleanRecord} by ${record.new_recordholder}`;
+	}).join('<br />');
 });
 
 // function removeLine(event) {
@@ -114,7 +153,7 @@ td:nth-child(2) {
 	padding-left: 3px;
 }
 
-td:last-child span {
+td.standing-for span {
 	cursor: help;
 }
 
@@ -128,7 +167,61 @@ sup {
 	font-size: 0.75em;
 }
 
-tr.no-image {
+tr.no-image td:not(.changed-hands-td) {
 	filter: blur(0.4px) opacity(0.6);
+}
+
+tr.no-image .changed-hands span:not(.tooltip) {
+	filter: blur(0.4px) opacity(0.6);
+}
+
+.changed-hands-td {
+	cursor: help;
+}
+
+.changed-hands {
+	position: relative;
+	display: inline-block;
+	/* border-bottom: 1px dotted black; */
+	cursor: help;
+}
+
+.changed-hands .tooltip {
+	visibility: hidden;
+	white-space: nowrap;
+	width: 280px;
+	background-color: #222;
+	color: #fff;
+	border: 1px solid #aaa;
+	text-align: center;
+	border-radius: 6px;
+	padding: 5px 0;
+	position: absolute;
+	z-index: 2;
+	top: 174%;
+	left: 50%;
+	margin-left: -180px;
+	pointer-events: none;
+	opacity: 0;
+	transition: all 400ms;
+	transform: translate(0, -10px);
+}
+
+.changed-hands .tooltip::after {
+	content: "";
+	position: absolute;
+	bottom: 100%;
+	left: 64%;
+	margin-left: -5px;
+	border-width: 5px;
+	border-style: solid;
+	border-color: transparent transparent #aaa transparent;
+}
+
+.changed-hands-td:hover .tooltip {
+	visibility: visible;
+	opacity: 1;
+	cursor: help;
+	transform: translate(0, 0);
 }
 </style>

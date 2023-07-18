@@ -15,6 +15,18 @@ const maxHumanizer = humanizeDuration.humanizer({
 	units: ["y", "mo", "d", "h", "m"]
 });
 
+function countPrevious(record, onlyCountChangedHands = false, count = 1) {
+	if (record.previousRecord) {
+		if ((onlyCountChangedHands && record.steam_id_new_recordholder !== record.previousRecord.steam_id_new_recordholder) || !onlyCountChangedHands) {
+			return countPrevious(record.previousRecord, onlyCountChangedHands, count) + 1;
+		} else {
+			return countPrevious(record.previousRecord, onlyCountChangedHands, count);
+		}
+	} else {
+		return 1;
+	}
+}
+
 function findAuthor(record, records) {
 	// Return the map author if it is not "[unknown]"
 	if (record.map_author !== "[unknown]") {
@@ -120,7 +132,7 @@ function findLongestStandingRecordPerMap(records) {
 			const tempRegex = /^(\d{2}):(\d{2}):(\d{2})\.(\d{2})$/gi;
 			const tempRepl = "$1h $2m $3s $40ms";
 			// console.log(map);
-			map.record_new = readableTime(map.record_new.replace(tempRegex, tempRepl));
+			map.record_new_str = readableTime(map.record_new.replace(tempRegex, tempRepl));
 		}
 	}
 	// Sort the maps by duration
@@ -128,6 +140,8 @@ function findLongestStandingRecordPerMap(records) {
 	// Add an id to each entry
 	mapList.forEach((map, index) => {
 		map.id = index;
+		map.previousCount = countPrevious(map, true);
+		map.previousCountAll = countPrevious(map);
 	});
 	// Return the list of maps sorted by duration
 	return mapList;
@@ -156,7 +170,7 @@ function readableTime(time) {
 async function saveJSONToFile(json, fullpath) {
 	// Save the JSON output to a file
 	try {
-		await fs.writeFile(path.join(fullpath), JSON.stringify(json));
+		await fs.writeFile(path.join(fullpath), JSON.stringify(json, null, 2));
 	} catch (err) {
 		console.error("err", err);
 	}
