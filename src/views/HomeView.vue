@@ -70,7 +70,7 @@
 			</a>
 		</div><b>&nbsp;•&nbsp;</b>
 		<div class="build-date">
-			Last Updated: {{ dateRef }}
+			Build Date: {{ dateRef }}
 		</div><b>&nbsp;•&nbsp;</b>
 		<div class="discord">
 			<a href="https://discord.gg/distance" target="_blank" rel="noopener noreferrer">
