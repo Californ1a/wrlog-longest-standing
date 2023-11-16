@@ -1,12 +1,6 @@
 <template>
 	<GithubCorner />
-	<Suspense>
-		<RouterView />
-
-		<template #fallback>
-			<div>Loading...</div>
-		</template>
-	</Suspense>
+	<RouterView />
 </template>
 
 <script setup>

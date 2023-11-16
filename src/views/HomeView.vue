@@ -7,53 +7,59 @@
 		<p class="note">
 			Note that some records are on maps that are no longer on the workshop, thus they can't be beaten anymore. Additionally, some are on maps that still exist on the workshop but are no longer possible to beat due to the author updating the map after the record was obtained.
 		</p>
-		<div class="controls">
-			<div class="pagination">
-				<!-- <button :disabled="page === 1" @click="page--">Previous</button>
-				<button :disabled="page === totalPages" @click="page++">Next</button> -->
-				<span>Page <input v-model.lazy="page" type="number" /> of {{ totalPages }}</span>
-				<br />
-				<span>Showing {{ displayStart }}-{{ displayEnd }} of {{ displayTotal }}</span>
-			</div>
-			<div class="filters">
-				<label>
-					<input type="checkbox" value="sprint" :checked="modes.includes('sprint')" @input="processMode" />
-					Sprint
-				</label>
-				<label>
-					<input type="checkbox" value="stunt" :checked="modes.includes('stunt')" @input="processMode" />
-					Stunt
-				</label>
-				<label>
-					<input type="checkbox" value="challenge" :checked="modes.includes('challenge')" @input="processMode" />
-					Challenge
-				</label>
-			</div>
-			<div class="search">
-				<input type="text" placeholder="Search..." ref="search" @input="processSearch" />
-			</div>
+		<LoadingSpinner v-if="loading && !error" />
+		<div v-else-if="error">
+			<p>There was an error loading the records. Please try again later.</p>
 		</div>
-		<table>
-			<thead>
-				<tr>
-					<th colspan="2">Map</th>
-					<th>Mode</th>
-					<th>Author</th>
-					<th>Time/Score</th>
-					<th>WR Holder</th>
-					<th>Standing For</th>
-					<th class="changed-hands" title="x/y where x denotes how many times a record has changed to a different holder and y is the total number of times the record has been beaten.">Changed Hands</th>
-				</tr>
-			</thead>
-			<tbody>
-				<RecordLine v-for="record in displayRows" :record="record" :key="record.id" />
-			</tbody>
-		</table>
-		<div class="controls bottom">
-			<div class="pagination">
-				<button :disabled="page === 1" @click="page--">Previous</button>
-				<button :disabled="page === totalPages" @click="page++">Next</button>
-				<span>Page {{ page }} of {{ totalPages }}</span>
+		<div class="container" v-else-if="!loading && !error">
+			<div class="controls">
+				<div class="pagination">
+					<!-- <button :disabled="page === 1" @click="page--">Previous</button>
+				<button :disabled="page === totalPages" @click="page++">Next</button> -->
+					<span>Page <input v-model.lazy="page" type="number" /> of {{ totalPages }}</span>
+					<br />
+					<span>Showing {{ displayStart }}-{{ displayEnd }} of {{ displayTotal }}</span>
+				</div>
+				<div class="filters">
+					<label>
+						<input type="checkbox" value="sprint" :checked="modes.includes('sprint')" @input="processMode" />
+						Sprint
+					</label>
+					<label>
+						<input type="checkbox" value="stunt" :checked="modes.includes('stunt')" @input="processMode" />
+						Stunt
+					</label>
+					<label>
+						<input type="checkbox" value="challenge" :checked="modes.includes('challenge')" @input="processMode" />
+						Challenge
+					</label>
+				</div>
+				<div class="search">
+					<input type="text" placeholder="Search..." ref="search" @input="processSearch" />
+				</div>
+			</div>
+			<table>
+				<thead>
+					<tr>
+						<th colspan="2">Map</th>
+						<th>Mode</th>
+						<th>Author</th>
+						<th>Time/Score</th>
+						<th>WR Holder</th>
+						<th>Standing For</th>
+						<th class="changed-hands" title="x/y where x denotes how many times a record has changed to a different holder and y is the total number of times the record has been beaten.">Changed Hands</th>
+					</tr>
+				</thead>
+				<tbody>
+					<RecordLine v-for="record in displayRows" :record="record" :key="record.id" />
+				</tbody>
+			</table>
+			<div class="controls bottom">
+				<div class="pagination">
+					<button :disabled="page === 1" @click="page--">Previous</button>
+					<button :disabled="page === totalPages" @click="page++">Next</button>
+					<span>Page {{ page }} of {{ totalPages }}</span>
+				</div>
 			</div>
 		</div>
 	</main>
@@ -75,8 +81,17 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useStore } from '@/stores/store';
+import { storeToRefs } from 'pinia'
 import RecordLine from '@/components/RecordLine.vue';
+import LoadingSpinner from '@/components/LoadingSpinner.vue';
+
+const store = useStore();
+const { records, filteredRecords } = storeToRefs(store);
+
+const loading = ref(true);
+const error = ref(null);
 const buildDate = new Date(__BUILD_TIMESTAMP__);
 const search = ref(null);
 const page = ref(1);
@@ -90,19 +105,7 @@ const dtFormat = new Intl.DateTimeFormat('en', {
 	timeZoneName: 'short',
 });
 const dateRef = ref(dtFormat.format(buildDate));
-const recordsRef = ref([]);
 const maxPerPage = 100;
-
-let records
-
-try {
-	const res = await fetch(
-		import.meta.env.BASE_URL + 'output.json');
-	records = await res.json();
-	recordsRef.value = records;
-} catch (err) {
-	console.error(err);
-}
 
 function debounce(func, timeout = 300) {
 	let timer;
@@ -116,7 +119,7 @@ function debounce(func, timeout = 300) {
 
 function doSearch() {
 	page.value = 1;
-	recordsRef.value = records.filter(record => {
+	filteredRecords.value = records.value.filter(record => {
 		const searchLower = search.value.value.toLowerCase();
 		return (record.map_name.toLowerCase().includes(searchLower)
 			|| (record.author && record.author !== '[unknown]' && record.author.toLowerCase().includes(searchLower))
@@ -138,9 +141,9 @@ function doMode(event) {
 const processSearch = debounce(() => doSearch());
 const processMode = debounce((e) => doMode(e));
 
-const perPage = computed(() => Math.min(maxPerPage, recordsRef.value.length) || 1);
-const totalPages = computed(() => Math.ceil(recordsRef.value.length / perPage.value) || 1);
-const totalRecords = computed(() => recordsRef.value.length || 0);
+const perPage = computed(() => Math.min(maxPerPage, filteredRecords.value.length) || 1);
+const totalPages = computed(() => Math.ceil(filteredRecords.value.length / perPage.value) || 1);
+const totalRecords = computed(() => filteredRecords.value.length || 0);
 
 const displayStart = computed(() => (totalRecords.value === 0) ? 0 : ((page.value - 1) * perPage.value + 1).toLocaleString());
 const displayEnd = computed(() => Math.min(page.value * perPage.value, totalRecords.value).toLocaleString());
@@ -149,7 +152,18 @@ const displayTotal = computed(() => totalRecords.value.toLocaleString());
 const displayRows = computed(() => {
 	const start = (page.value - 1) * perPage.value;
 	const end = page.value * perPage.value;
-	return recordsRef.value.slice(start, end);
+	return filteredRecords.value.slice(start, end);
+});
+
+onMounted(async () => {
+	try {
+		await store.fetchRecords();
+		console.log('Records fetched', records.value.length);
+	} catch (err) {
+		console.error(err);
+	} finally {
+		loading.value = false;
+	}
 });
 </script>
 

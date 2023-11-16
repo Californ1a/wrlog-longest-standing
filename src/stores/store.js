@@ -1,19 +1,19 @@
-/* eslint-env node */
-const fs = require("fs").promises;
-const path = require("path");
-const axios = require("axios");
-const Duration = require("duration-js");
-const humanizeDuration = require("humanize-duration");
-const daysHumanizer = humanizeDuration.humanizer({
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
+import axios from 'axios';
+import { Duration } from '@icholy/duration';
+import humanizeDuration from '@tanzanite/humanize-duration';
+
+const daysHumanizer = {
 	largest: 1,
 	round: true,
 	units: ["d", "h", "m"]
-});
-const maxHumanizer = humanizeDuration.humanizer({
+};
+const maxHumanizer = {
 	largest: 3,
 	round: true,
 	units: ["y", "mo", "d", "h", "m"]
-});
+};
 
 function countPrevious(record, onlyCountChangedHands = false, count = 1) {
 	if (record.previousRecord) {
@@ -121,11 +121,11 @@ function findLongestStandingRecordPerMap(records) {
 	// Convert the duration to a human-readable string for each map
 	for (const map of mapList) {
 		// Add a human-readable duration string
-		map.standingForStr = daysHumanizer(map.standingFor);
-		map.standingForMaxStr = maxHumanizer(map.standingFor);
+		map.standingForStr = humanizeDuration(map.standingFor, daysHumanizer);
+		map.standingForMaxStr = humanizeDuration(map.standingFor, maxHumanizer);
 		if (map.stoodFor) {
-			map.stoodForStr = daysHumanizer(map.stoodFor);
-			map.stoodForMaxStr = maxHumanizer(map.stoodFor);
+			map.stoodForStr = humanizeDuration(map.stoodFor, daysHumanizer);
+			map.stoodForMaxStr = humanizeDuration(map.stoodFor, maxHumanizer);
 		}
 
 		if (map.mode !== "Stunt") {
@@ -167,52 +167,25 @@ function readableTime(time) {
 	return `${hours}${minutes}${seconds}${milliseconds.slice(0, milliseconds.length-1)}${(minutes==="")?"s":""}`;
 }
 
-async function saveJSONToFile(json, fullpath) {
-	// Save the JSON output to a file
-	try {
-		await fs.writeFile(path.join(fullpath), JSON.stringify(json, null, 2));
-	} catch (err) {
-		console.error("err", err);
+export const useStore = defineStore('main', () => {
+	const records = ref([]);
+	const filteredRecords = ref([]);
+
+	function saveEntriesToStore(entries) {
+		records.value = entries;
+		filteredRecords.value = entries;
 	}
-}
 
-
-async function main() {
-	try {
-		let json;
-		const distDir = process.cwd();
-		const outputExists = await fs.access(path.join(distDir, "changelist.json")).then(() => true).catch(() => false);
-		if (outputExists) {
-			// Read the JSON changelist from a file
-			console.log("Reading JSON changelist from file...");
-			const data = await fs.readFile(path.join(distDir, "changelist.json"), "utf8");
-			json = JSON.parse(data);
-		} else {
-			// Fetch the changelist from the server
-			console.log("Fetching changelist from server...");
-			const res = await axios.get("http://seekr.pw/distance-log/changelist.json");
-			// Save the JSON changelist to a file
-			console.log("Saving JSON changelist to file...");
-			await saveJSONToFile(res.data, path.join(distDir, "changelist.json"));
-			json = res.data;
-		}
-		// Find the longest standing record per map
-		console.log("Finding longest standing records...");
-		const result = findLongestStandingRecordPerMap(json);
-		const publicDir = path.join(process.cwd(), "public");
-		// Check if 'dist' directory exists, create it if not
-		const publicExists = await fs.access(publicDir).then(() => true).catch(() => false);
-		if (!publicExists) {
-			console.log("Creating 'public' directory...");
-			await fs.mkdir(publicDir);
-		}
-		// Save the JSON output to a file
-		console.log("Saving JSON output to file...");
-		await saveJSONToFile(result, path.join(process.cwd(), "public", "output.json"));
-		console.log("Done!");
-	} catch (err) {
-		console.error("err", err);
+	async function fetchRecords() {
+		const response = await axios.get("https://cali-cors-anywhere.herokuapp.com/https://seekr.pw/distance-log/changelist.json");
+		const entries = response.data;
+		const formattedEntries = findLongestStandingRecordPerMap(entries);
+		saveEntriesToStore(formattedEntries);
 	}
-}
 
-main();
+	return {
+		records,
+		filteredRecords,
+		fetchRecords,
+	}
+});
